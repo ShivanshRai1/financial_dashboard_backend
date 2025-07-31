@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const mysql = require('mysql2');
 const fs = require('fs');
@@ -15,7 +16,7 @@ const connection = mysql.createConnection({
   password: process.env.DB_PASSWORD || '', // Set your DB password in environment variable
   database: 'financial_dashboard',
   ssl: {
-    ca: fs.readFileSync('./ca.pem'),
+    ca: fs.readFileSync(require('path').join(__dirname, 'ca.pem')),
   }
 });
 
@@ -29,6 +30,33 @@ app.get('/api/financial-data', (req, res) => {
     }
     res.json(results);
   });
+});
+
+
+// Free stock data API using Yahoo Finance (unofficial, via yfinance API)
+const axios = require('axios');
+
+// Example: https://query1.finance.yahoo.com/v7/finance/quote?symbols=AAPL
+app.get('/api/stock/:ticker', async (req, res) => {
+  const ticker = req.params.ticker;
+  try {
+    const url = `https://query1.finance.yahoo.com/v7/finance/quote?symbols=${encodeURIComponent(ticker)}`;
+    const response = await axios.get(url);
+    const quote = response.data.quoteResponse.result[0];
+    if (!quote) {
+      return res.status(404).json({ error: 'Ticker not found' });
+    }
+    res.json({
+      symbol: quote.symbol,
+      price: quote.regularMarketPrice,
+      change: quote.regularMarketChange,
+      changePercent: quote.regularMarketChangePercent,
+      lastUpdated: new Date(quote.regularMarketTime * 1000).toLocaleDateString()
+    });
+  } catch (err) {
+    console.error('Error fetching stock data:', err.message);
+    res.status(500).json({ error: 'Failed to fetch stock data' });
+  }
 });
 
 app.listen(PORT, () => {
