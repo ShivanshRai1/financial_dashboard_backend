@@ -1,0 +1,36 @@
+const express = require('express');
+const mysql = require('mysql2');
+const fs = require('fs');
+const cors = require('cors');
+
+const app = express();
+const PORT = 5000;
+
+app.use(cors()); // Allow requests from the frontend
+
+const connection = mysql.createConnection({
+  host: 'mysql-27aceb02-dashboard01.k.aivencloud.com',
+  port: 26127,
+  user: 'avnadmin',
+  password: process.env.DB_PASSWORD || '', // Set your DB password in environment variable
+  database: 'financial_dashboard',
+  ssl: {
+    ca: fs.readFileSync('C:/Users/Dragon Byte/Downloads/ca.pem')
+  }
+});
+
+// API endpoint for financial data
+app.get('/api/financial-data', (req, res) => {
+  connection.query('SELECT * FROM financial_data', (err, results) => {
+    if (err) {
+      console.error('Database error:', err);
+      res.status(500).json({ error: 'Database error' });
+      return;
+    }
+    res.json(results);
+  });
+});
+
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
