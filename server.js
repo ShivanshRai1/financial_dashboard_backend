@@ -33,29 +33,46 @@ app.get('/api/financial-data', (req, res) => {
 });
 
 
-// Free stock data API using Yahoo Finance (unofficial, via yfinance API)
+// Free stock data API using Finnhub
 const axios = require('axios');
 
-// Example: https://query1.finance.yahoo.com/v7/finance/quote?symbols=AAPL
+// Example: https://finnhub.io/api/v1/quote?symbol=AAPL&token=API_KEY
 app.get('/api/stock/:ticker', async (req, res) => {
   const ticker = req.params.ticker;
+  const apiKey = process.env.FINNHUB_API_KEY;
+  if (!apiKey) {
+    return res.status(500).json({ error: 'Finnhub API key not set in .env' });
+  }
   try {
-    const url = `https://query1.finance.yahoo.com/v7/finance/quote?symbols=${encodeURIComponent(ticker)}`;
+    const url = `https://finnhub.io/api/v1/quote?symbol=${encodeURIComponent(ticker)}&token=${apiKey}`;
     const response = await axios.get(url);
-    const quote = response.data.quoteResponse.result[0];
-    if (!quote) {
-      return res.status(404).json({ error: 'Ticker not found' });
+    const data = response.data;
+    if (data && typeof data.c === 'number' && !isNaN(data.c)) {
+      // c: current price, d: change, dp: percent change, t: timestamp
+      res.json({
+        symbol: ticker,
+        price: data.c,
+        change: data.d,
+        changePercent: data.dp,
+        lastUpdated: data.t ? new Date(data.t * 1000).toLocaleDateString() : null
+      });
+    } else {
+      console.error('Finnhub API returned no price for', ticker, data);
+      res.status(404).json({ error: 'Ticker not found or no price data' });
     }
-    res.json({
-      symbol: quote.symbol,
-      price: quote.regularMarketPrice,
-      change: quote.regularMarketChange,
-      changePercent: quote.regularMarketChangePercent,
-      lastUpdated: new Date(quote.regularMarketTime * 1000).toLocaleDateString()
-    });
   } catch (err) {
-    console.error('Error fetching stock data:', err.message);
-    res.status(500).json({ error: 'Failed to fetch stock data' });
+    console.error('Error fetching stock data from Finnhub:', err.message);
+    if (err.response) {
+      console.error('Status:', err.response.status);
+      console.error('Headers:', JSON.stringify(err.response.headers));
+      console.error('Data:', JSON.stringify(err.response.data));
+    } else if (err.request) {
+      console.error('No response received:', err.request);
+    } else {
+      console.error('Error config:', err.config);
+    }
+    console.error('Full error stack:', err.stack);
+    res.status(500).json({ error: 'Failed to fetch stock data', details: err.message });
   }
 });
 
