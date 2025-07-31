@@ -15,7 +15,7 @@ const connection = mysql.createConnection({
   password: process.env.DB_PASSWORD || '', // Set your DB password in environment variable
   database: 'financial_dashboard',
   ssl: {
-    ca: fs.readFileSync('C:/Users/Dragon Byte/Downloads/ca.pem')
+    ca: fs.readFileSync('./ca.pem'),
   }
 });
 
