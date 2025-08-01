@@ -33,57 +33,6 @@ app.get('/api/financial-data', (req, res) => {
 });
 
 
-// Free stock data API using Finnhub
-const axios = require('axios');
-// Helper: Map tickers for Finnhub (add exchange suffixes if needed)
-function mapTickerForFinnhub(ticker) {
-  // Add more mappings as needed for international tickers
-  const mapping = {
-    '6963.T': '6963.T', // Tokyo
-    'IFX.DE': 'IFX.DE', // XETRA
-    'VSH': 'VSH',
-    'ON': 'ON',
-    'TXN': 'TXN',
-    'ADI': 'ADI',
-    // fallback: return as is
-  };
-  return mapping[ticker] || ticker;
-}
-
-// Example: https://query1.finance.yahoo.com/v7/finance/quote?symbols=AAPL
-app.get('/api/stock/:ticker', async (req, res) => {
-  const ticker = req.params.ticker;
-  const mappedTicker = mapTickerForFinnhub(ticker);
-  const yahooUrl = `https://query1.finance.yahoo.com/v7/finance/quote?symbols=${encodeURIComponent(mappedTicker)}`;
-  try {
-    const yahooResp = await axios.get(yahooUrl, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36',
-        'Accept': 'application/json,text/plain,*/*'
-      }
-    });
-    const quote = yahooResp.data.quoteResponse.result[0];
-    if (quote && typeof quote.regularMarketPrice === 'number') {
-      return res.json({
-        symbol: quote.symbol,
-        price: quote.regularMarketPrice,
-        change: quote.regularMarketChange,
-        changePercent: quote.regularMarketChangePercent,
-        lastUpdated: quote.regularMarketTime ? new Date(quote.regularMarketTime * 1000).toLocaleDateString() : null
-      });
-    } else {
-      console.error('Yahoo Finance: No price data for', mappedTicker, yahooResp.data);
-      return res.status(404).json({ error: 'Ticker not found or no price data (Yahoo Finance)' });
-    }
-  } catch (err) {
-    if (err.response) {
-      console.error('Yahoo Finance error:', err.message, 'Status:', err.response.status, 'Data:', err.response.data);
-    } else {
-      console.error('Yahoo Finance error:', err.message);
-    }
-    return res.status(500).json({ error: 'Failed to fetch stock data from Yahoo Finance', details: err.message });
-  }
-});
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
