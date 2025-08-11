@@ -3,6 +3,7 @@ const express = require('express');
 const mysql = require('mysql2');
 const fs = require('fs');
 const cors = require('cors');
+const path = require('path');
 
 const app = express();
 const PORT = 5000;
@@ -16,7 +17,7 @@ const connection = mysql.createConnection({
   password: process.env.DB_PASSWORD || '', // Set your DB password in environment variable
   database: 'financial_dashboard',
   ssl: {
-    ca: fs.readFileSync(require('path').join(__dirname, 'ca.pem')),
+    ca: fs.readFileSync(path.join(__dirname, 'ca.pem')),
   }
 });
 
@@ -32,7 +33,17 @@ app.get('/api/financial-data', (req, res) => {
   });
 });
 
-
+// API endpoint for individual_company_components
+app.get('/api/individual-company-components', (req, res) => {
+  connection.query('SELECT * FROM individual_company_components', (err, results) => {
+    if (err) {
+      console.error('Database error:', err);
+      res.status(500).json({ error: 'Database error' });
+      return;
+    }
+    res.json(results);
+  });
+});
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
