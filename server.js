@@ -52,12 +52,17 @@ app.get('/api/individual-company-components', (req, res) => {
   });
 });
 
-// API endpoint for fetching Yahoo Finance data
+// API endpoint for fetching Yahoo Finance data via RapidAPI
 app.get('/api/yahoo-quote/:ticker', async (req, res) => {
   const ticker = req.params.ticker;
-  const url = `https://query1.finance.yahoo.com/v7/finance/quote?symbols=${encodeURIComponent(ticker)}`;
+  const url = `https://yh-finance.p.rapidapi.com/stock/v2/get-summary?symbol=${encodeURIComponent(ticker)}&region=US`;
   try {
-    const response = await fetch(url);
+    const response = await fetch(url, {
+      headers: {
+        'X-RapidAPI-Key': '73dbb4f6damsh60fde03d26db142p1bf479jsn3859a1da0743',
+        'X-RapidAPI-Host': 'yh-finance.p.rapidapi.com'
+      }
+    });
     const data = await response.json();
     res.json(data);
   } catch (err) {
