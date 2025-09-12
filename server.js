@@ -1,3 +1,15 @@
+// API: Get individual company component breakdowns
+app.get('/api/individual-company-components', (req, res) => {
+  // Example: Return all rows from edgar_financials for component metrics
+  // You can filter for specific metrics if needed
+  connection.query('SELECT company_name AS company, metric_name AS metrics, period, metric_value FROM edgar_financials', (err, results) => {
+    if (err) {
+      console.error('Database error:', err);
+      return res.status(500).json({ error: 'Database error' });
+    }
+    res.json(results);
+  });
+});
 
 require('dotenv').config();
 const express = require('express');
