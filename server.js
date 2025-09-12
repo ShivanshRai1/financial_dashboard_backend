@@ -146,8 +146,9 @@ async function fetchAndInsertAllCompanies() {
   }
 }
 
-// API endpoint to trigger EDGAR data update (GET for cloud compatibility)
+
 app.get('/api/update-edgar-data', async (req, res) => {
+  console.log('API /api/update-edgar-data called');
   await fetchAndInsertAllCompanies();
   res.json({ status: 'Update triggered' });
 });
