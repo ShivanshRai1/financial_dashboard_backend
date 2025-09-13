@@ -1,6 +1,6 @@
 // =====================
 // Top-level requires
-require('dotenv').config();
+require('dotenv').config({ path: require('path').resolve(__dirname, '../../.env') });
 const express = require('express');
 const mysql = require('mysql2');
 const fs = require('fs');
@@ -19,6 +19,13 @@ const app = express();
 const PORT = process.env.PORT;
 app.use(cors());
 app.use(express.json());
+
+// Debug: print loaded DB password (masked)
+if (!process.env.DB_PASSWORD) {
+  console.error('DB_PASSWORD is not loaded from .env!');
+} else {
+  console.log('Loaded DB_PASSWORD:', process.env.DB_PASSWORD.slice(0,4) + '...' + process.env.DB_PASSWORD.slice(-4));
+}
 
 const connection = mysql.createConnection({
   host: 'mysql-27aceb02-dashboard01.k.aivencloud.com',
